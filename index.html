@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Character - Home</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <div class="hamburger-menu" id="hamburger-menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </header>
+
+    <nav class="sidebar" id="sidebar">
+        <ul>
+            <li><a href="option.html">Options</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <div id="character-container"></div>
+        <div class="chat-container">
+            <div id="chat-log"></div>
+            <div class="chat-input">
+                <input type="text" id="user-input" placeholder="メッセージを入力...">
+                <button id="send-button">送信</button>
+            </div>
+        </div>
+    </main>
+
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
