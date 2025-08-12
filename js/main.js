@@ -1,11 +1,7 @@
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.module.js';
-import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/loaders/GLTFLoader.js';
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.167.0/build/three.module.js';
+import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.167.0/examples/jsm/loaders/GLTFLoader.js';
 
 // --- Basic Setup ---
-// Check authentication before running main script
-if (!sessionStorage.getItem('authenticated')) {
-    window.location.href = 'login.html';
-}
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / (window.innerHeight * 0.7), 0.1, 1000);
@@ -23,12 +19,31 @@ scene.add(directionalLight);
 
 // --- Character Loading ---
 const loader = new GLTFLoader();
-// Note: Replace with an actual 3D model path
-// For now, we'll just use a cube as a placeholder
-const geometry = new THREE.BoxGeometry();
-const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-const cube = new THREE.Mesh(geometry, material);
-scene.add(cube);
+// IMPORTANT: Replace 'assets/avatar.glb' with the actual path to your 3D model.
+// You can download free GLTF/GLB models from sites like Sketchfab.
+// Create an 'assets' folder in your project and place the model file there.
+loader.load(
+    'assets/avatar.glb', // Example path - this will fail initially
+    function (gltf) {
+        const model = gltf.scene;
+        // Optional: Adjust model scale, position, rotation
+        model.scale.set(1, 1, 1);
+        model.position.set(0, -1, 0); // Adjust Y position to have it stand on the "ground"
+        scene.add(model);
+    },
+    // called while loading is progressing
+    function (xhr) {
+        console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+    },
+    // called when loading has errors
+    function (error) {
+        console.error('Could not load 3D model, displaying fallback cube.', error);
+        const geometry = new THREE.BoxGeometry();
+        const material = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true });
+        const cube = new THREE.Mesh(geometry, material);
+        scene.add(cube);
+    }
+);
 
 camera.position.z = 5;
 
@@ -36,8 +51,7 @@ camera.position.z = 5;
 // --- Animation Loop ---
 function animate() {
     requestAnimationFrame(animate);
-    cube.rotation.x += 0.01;
-    cube.rotation.y += 0.01;
+    // If you have animations in your model, you'll need to add an AnimationMixer here.
     renderer.render(scene, camera);
 }
 animate();

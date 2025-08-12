@@ -1,8 +1,13 @@
-// Redirect to login if not authenticated
+// Redirect based on authentication status
 if (!sessionStorage.getItem('authenticated')) {
-    // Allow access to login and register pages
+    // If not authenticated, redirect to login page if not already on login/register
     if (!window.location.pathname.endsWith('login.html') && !window.location.pathname.endsWith('register.html')) {
         window.location.href = 'login.html';
+    }
+} else {
+    // If authenticated, redirect to home page if on login/register
+    if (window.location.pathname.endsWith('login.html') || window.location.pathname.endsWith('register.html')) {
+        window.location.href = 'index.html';
     }
 }
 
