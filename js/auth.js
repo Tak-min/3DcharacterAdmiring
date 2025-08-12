@@ -1,14 +1,18 @@
-// Redirect based on authentication status
-if (!sessionStorage.getItem('authenticated')) {
-    // If not authenticated, redirect to login page if not already on login/register
-    if (!window.location.pathname.endsWith('login.html') && !window.location.pathname.endsWith('register.html')) {
-        window.location.href = 'login.html';
-    }
-} else {
-    // If authenticated, redirect to home page if on login/register
-    if (window.location.pathname.endsWith('login.html') || window.location.pathname.endsWith('register.html')) {
-        window.location.href = 'index.html';
-    }
+// --- Authentication & Redirection ---
+
+// Get the current page filename (e.g., "index.html", "login.html")
+const currentPage = window.location.pathname.split('/').pop();
+
+const isAuthenticated = sessionStorage.getItem('authenticated') === 'true';
+
+// If not authenticated, redirect to login page
+if (!isAuthenticated && currentPage !== 'login.html' && currentPage !== 'register.html') {
+    window.location.href = 'login.html';
+}
+
+// If authenticated, redirect from login/register to the main page
+if (isAuthenticated && (currentPage === 'login.html' || currentPage === 'register.html')) {
+    window.location.href = 'index.html';
 }
 
 const loginForm = document.getElementById('login-form');
