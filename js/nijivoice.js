@@ -6,7 +6,7 @@ class NijivoiceSpeech {
     constructor() {
         this.apiEndpoint = CONFIG.nijivoice.apiEndpoint;
         this.apiKey = CONFIG.nijivoice.apiKey;
-        this.speakerId = CONFIG.nijivoice.defaultSpeakerId;
+        this.speakerId = CONFIG.nijivoice.defaultSpeakerId; // UUIDを直接設定
         this.speed = CONFIG.nijivoice.defaultSpeed;
         this.audioContext = null;
         this.audioSource = null;
@@ -84,23 +84,33 @@ class NijivoiceSpeech {
             
             // 詳細な話者リスト情報をログに出力
             if (data.voiceActors && data.voiceActors.length > 0) {
-                console.log('NijivoiceSpeech: 最初の5人の話者情報:');
-                for (let i = 0; i < Math.min(5, data.voiceActors.length); i++) {
-                    const actor = data.voiceActors[i];
-                    console.log(`話者${i+1}: ID=${actor.id}, 名前=${actor.name}`);
+                console.log(`NijivoiceSpeech: ${data.voiceActors.length}人の話者を取得しました`);
+                // 最初の1人だけ詳細表示
+                const firstActor = data.voiceActors[0];
+                console.log(`最初の話者: ${firstActor.name} (ID: ${firstActor.id})`);
+                if (firstActor.voiceStyles && firstActor.voiceStyles.length > 0) {
+                    console.log(`  - ${firstActor.voiceStyles.length}個のスタイルが利用可能`);
                 }
-                console.log(`合計${data.voiceActors.length}人の話者が利用可能です`);
             }
             
             // にじボイス形式のデータをVOICEVOX形式に変換
             this.speakerList = this.convertSpeakerFormat(data.voiceActors || []);
             
-            // APIから取得した最初の話者IDを使用
+            // APIから取得した最初の話者IDを使用（必ずUUIDを使用）
             if (this.speakerList.length > 0 && this.speakerList[0].styles.length > 0) {
-                const firstSpeakerId = this.speakerList[0].styles[0].id;
-                console.log('NijivoiceSpeech: 最初の話者IDを使用します:', firstSpeakerId);
+                // 最初の話者のUUIDを取得（数値IDではなく）
+                const firstActor = data.voiceActors[0];
+                const firstSpeakerId = firstActor.id; // UUIDを直接使用
+                console.log('NijivoiceSpeech: 最初の話者UUIDを使用します:', firstSpeakerId);
                 this.speakerId = firstSpeakerId;
                 CONFIG.nijivoice.defaultSpeakerId = firstSpeakerId;
+            } else {
+                console.warn('NijivoiceSpeech: 有効な話者が見つかりません');
+                // デフォルトの話者リストにフォールバック
+                this.useDefaultSpeakerList();
+                if (this.speakerList.length > 0) {
+                    this.speakerId = this.speakerList[0].styles[0].id;
+                }
             }
             
             // スピーカー選択フォームを更新
@@ -123,18 +133,23 @@ class NijivoiceSpeech {
      * @returns {Array} - VOICEVOX形式の話者リスト
      */
     convertSpeakerFormat(voiceActors) {
-        console.log('NijivoiceSpeech: 話者データ変換', voiceActors);
         return voiceActors.map(actor => {
-            // スタイルがある場合はそれを使用、なければデフォルトスタイルを作成
-            const styles = actor.voiceStyles && actor.voiceStyles.length > 0
-                ? actor.voiceStyles.map(style => ({
-                    id: style.id.toString(),
-                    name: style.style
-                }))
-                : [{
-                    id: actor.id,
-                    name: '標準'
-                }];
+            // にじボイスAPIでは話者のUUIDを使用する（スタイルIDは無視）
+            const styles = [{
+                id: actor.id, // 常に話者のUUIDを使用
+                name: '標準'
+            }];
+            
+            // 複数のスタイルがある場合も、話者UUIDを使用
+            if (actor.voiceStyles && actor.voiceStyles.length > 0) {
+                actor.voiceStyles.forEach(style => {
+                    styles.push({
+                        id: actor.id, // スタイルが違っても話者UUIDを使用
+                        name: style.style,
+                        styleId: style.id // 参考用にスタイルIDも保存
+                    });
+                });
+            }
             
             return {
                 name: actor.name,
@@ -147,36 +162,36 @@ class NijivoiceSpeech {
      * デフォルトの話者リストを使用
      */
     useDefaultSpeakerList() {
-        // 基本的な話者リストを静的に定義
+        // 基本的な話者リストを静的に定義（実際のUUID形式のIDを使用）
         this.speakerList = [
             {
-                "name": "にじボイス女性1",
+                "name": "花村 穂ノ香",
                 "styles": [
-                    { "id": "1", "name": "標準" }
+                    { "id": "231e0170-0ece-4155-be44-231423062f41", "name": "標準" }
                 ]
             },
             {
-                "name": "にじボイス女性2",
+                "name": "漆夜 蓮",
                 "styles": [
-                    { "id": "2", "name": "標準" }
+                    { "id": "04c7f4e0-41d8-4d02-9cbe-bf79e635f5ab", "name": "標準" }
                 ]
             },
             {
-                "name": "にじボイス男性1",
+                "name": "冬月 初音",
                 "styles": [
-                    { "id": "3", "name": "標準" }
+                    { "id": "d158278c-c4fa-461a-b271-468146ad51c9", "name": "標準" }
                 ]
             },
             {
-                "name": "にじボイス女性3",
+                "name": "苔村 まりも",
                 "styles": [
-                    { "id": "4", "name": "標準" }
+                    { "id": "2f982b65-dbc3-4ed6-b355-b0f7c0abaa70", "name": "標準" }
                 ]
             },
             {
-                "name": "にじボイス男性2",
+                "name": "陽斗・エイデン・グリーンウッド",
                 "styles": [
-                    { "id": "5", "name": "標準" }
+                    { "id": "29cdf589-e581-4ab0-8467-0cd0c7ba640f", "name": "標準" }
                 ]
             }
         ];
@@ -209,11 +224,6 @@ class NijivoiceSpeech {
                 option.value = style.id;
                 option.textContent = `${speaker.name} (${style.name})`;
                 selectElement.appendChild(option);
-                
-                // 現在の話者IDに一致する場合はログに記録
-                if (style.id === this.speakerId) {
-                    console.log('NijivoiceSpeech: 現在選択中の話者:', speaker.name, style.name, 'ID:', style.id);
-                }
             });
         });
         
@@ -224,13 +234,21 @@ class NijivoiceSpeech {
         // 選択されているかどうか確認
         if (selectElement.selectedIndex === -1) {
             console.warn('NijivoiceSpeech: 指定された話者ID', this.speakerId, 'がリストに存在しません');
-            // 最初の話者を選択
+            // 最初の話者のUUIDを選択
             if (selectElement.options.length > 0) {
+                // 最初のオプションのvalue（UUID）を使用
                 this.speakerId = selectElement.options[0].value;
                 selectElement.selectedIndex = 0;
-                console.log('NijivoiceSpeech: 最初の話者IDを選択しました:', this.speakerId);
+                console.log('NijivoiceSpeech: 最初の話者UUIDを選択しました:', this.speakerId);
             }
         }
+        
+        // 話者変更イベントリスナーを追加
+        selectElement.addEventListener('change', (e) => {
+            const newSpeakerId = e.target.value;
+            console.log('NijivoiceSpeech: 話者を変更します:', this.speakerId, '->', newSpeakerId);
+            this.setSpeakerId(newSpeakerId);
+        });
     }
     
     /**
@@ -247,7 +265,7 @@ class NijivoiceSpeech {
             console.log('Synthesizing with NijiVoice:', text.substring(0, 20) + '...');
             
             // 話者IDが有効かどうか確認
-            if (!this.speakerId || this.speakerId === '1') {
+            if (!this.speakerId) {
                 // 話者リストから最初の有効なIDを取得
                 if (this.speakerList.length > 0 && this.speakerList[0].styles.length > 0) {
                     this.speakerId = this.speakerList[0].styles[0].id;
@@ -256,6 +274,8 @@ class NijivoiceSpeech {
                     throw new Error('有効な話者IDが見つかりません。話者リストが空です。');
                 }
             }
+            
+            console.log('NijivoiceSpeech: 使用する話者ID:', this.speakerId, '(type:', typeof this.speakerId, ')');
             
             // にじボイスAPI形式のリクエストデータ
             const requestData = {
@@ -302,22 +322,39 @@ class NijivoiceSpeech {
             const responseData = await response.json();
             console.log('NijivoiceSpeech: 音声合成レスポンス', responseData);
             
-            if (!responseData.generatedVoice || !responseData.generatedVoice.audioFileUrl) {
+            if (!responseData.generatedVoice) {
+                throw new Error('NijivoiceSpeech: generatedVoiceが見つかりません');
+            }
+            
+            // 音声ファイルURLの詳細をログ出力
+            const generatedVoice = responseData.generatedVoice;
+            console.log('=== にじボイス音声ファイルURL情報 ===');
+            console.log('audioFileUrl:', generatedVoice.audioFileUrl);
+            console.log('audioFileDownloadUrl:', generatedVoice.audioFileDownloadUrl);
+            console.log('その他のプロパティ:', Object.keys(generatedVoice));
+            console.log('=====================================');
+            
+            // どちらのURLを使用するか判定
+            const audioUrl = generatedVoice.audioFileDownloadUrl || generatedVoice.audioFileUrl;
+            if (!audioUrl) {
                 throw new Error('NijivoiceSpeech: 音声ファイルのURLが見つかりません');
             }
             
-            // 音声ファイルをダウンロード
-            const audioUrl = responseData.generatedVoice.audioFileUrl;
+            console.log('NijivoiceSpeech: 使用する音声URL:', audioUrl);
+            
+            // 音声ファイルを直接ダウンロード
+            console.log('NijivoiceSpeech: 音声ファイルをダウンロード中...');
             const audioResponse = await fetch(audioUrl);
             
             if (!audioResponse.ok) {
-                throw new Error(`NijivoiceSpeech: 音声ファイルのダウンロードエラー: ${audioResponse.status}`);
+                throw new Error(`NijivoiceSpeech: 音声ファイルのダウンロードエラー: ${audioResponse.status} ${audioResponse.statusText}`);
             }
             
+            console.log('NijivoiceSpeech: 音声ファイルダウンロード完了');
             return await audioResponse.arrayBuffer();
         } catch (error) {
             console.error('NijivoiceSpeech: 音声合成処理エラー:', error);
-            this.showErrorMessage(`にじボイス音声合成に失敗しました: ${error.message}`);
+            this.showErrorMessage(`にじボイス音声合成に失敗しました: ${error.message || 'エラーが発生しました'}`);
             return null;
         }
     }

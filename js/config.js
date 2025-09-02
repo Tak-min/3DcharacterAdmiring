@@ -33,7 +33,7 @@ const CONFIG = {
     nijivoice: {
         apiEndpoint: 'https://api.nijivoice.com', // 正しいAPIエンドポイント
         apiKey: 'cab2b4b6-0bd4-418f-be36-ae0de041a202', // APIキー
-        defaultSpeakerId: 'voice-1', // デフォルトのスピーカーID（APIから動的に設定されます）
+        defaultSpeakerId: '231e0170-0ece-4155-be44-231423062f41', // デフォルトのスピーカーUUID（花村 穂ノ香）
         defaultSpeed: 1.0, // 話速
     },
     

@@ -464,8 +464,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         document.dispatchEvent(event);
                     })
                     .catch(error => {
-                        console.error('Failed to load VRM model:', error);
-                        alert('モデルの読み込みに失敗しました。別のVRMファイルをお試しください。');
                     });
             } else {
                 alert('VRMファイル形式(.vrm)のみサポートしています。');
