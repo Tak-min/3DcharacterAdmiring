@@ -59,47 +59,20 @@ class VoicevoxSpeech {
         try {
             console.log('VOICEVOXSpeech: 話者リスト取得開始');
             
-            // APIキーを含めたURLを構築
-            let apiUrl = `${this.apiEndpoint}/speakers/`;
-            if (this.apiKey) {
-                apiUrl += `?key=${encodeURIComponent(this.apiKey)}`;
-                console.log('VOICEVOXSpeech: APIキーを設定しました');
-            } else {
-                console.warn('VOICEVOXSpeech: APIキーが設定されていません');
-            }
-            
-            console.log('VOICEVOXSpeech: 話者リスト取得URL', apiUrl);
-            
-            const response = await fetch(apiUrl, { 
-                headers: {
-                    'Accept': 'application/json'
-                },
-                signal: AbortSignal.timeout(10000) // 10秒でタイムアウト
-            });
-            
-            if (!response.ok) {
-                let errorMessage = `${response.status} ${response.statusText}`;
-                if (response.status === 403) {
-                    errorMessage = '403 Forbidden - APIキーが無効か、リクエスト制限に達しました';
-                    console.error('VOICEVOXSpeech: APIキーエラー。正しいAPIキーをconfig.jsに設定してください。');
-                } else if (response.status === 429) {
-                    errorMessage = '429 Too Many Requests - リクエスト制限を超えています';
+            // セキュアAPIクライアント経由で取得
+            if (window.secureApiClient) {
+                const data = await window.secureApiClient.getVoicevoxSpeakers();
+                console.log('VOICEVOXSpeech: 話者リスト取得成功（プロキシ経由）', data);
+                
+                if (Array.isArray(data)) {
+                    this.speakerList = data;
+                    this.updateSpeakerSelect();
+                    return data;
+                } else {
+                    throw new Error('VOICEVOXSpeech: 話者リストの形式が不正です');
                 }
-                throw new Error(`VOICEVOXSpeech: 話者リスト取得エラー: ${errorMessage}`);
-            }
-            
-            const data = await response.json();
-            console.log('VOICEVOXSpeech: 話者リスト取得成功', data);
-            
-            if (Array.isArray(data)) {
-                this.speakerList = data;
-                
-                // スピーカー選択フォームを更新
-                this.updateSpeakerSelect();
-                
-                return data;
             } else {
-                throw new Error('VOICEVOXSpeech: 話者リストの形式が不正です');
+                throw new Error('セキュアAPIクライアントが利用できません');
             }
         } catch (error) {
             console.error('VOICEVOXSpeech: 話者リスト取得処理エラー:', error);
@@ -180,52 +153,37 @@ class VoicevoxSpeech {
         try {
             console.log('VOICEVOXSpeech: 音声合成開始', text.substring(0, 20) + '...');
             
-            // URLパラメータの構築
-            const params = new URLSearchParams({
+            // パラメータを構築
+            const params = {
                 text: text,
                 speaker: this.speakerId,
                 speed: this.speed,
                 pitch: this.pitch,
                 intonationScale: this.intonationScale
-            });
+            };
             
-            // APIキーが設定されている場合は追加
-            if (this.apiKey) {
-                params.append('key', this.apiKey);
+            // セキュアAPIクライアント経由で音声合成
+            if (window.secureApiClient) {
+                const audioData = await window.secureApiClient.getVoicevoxAudio(params);
+                console.log('VOICEVOXSpeech: 音声合成成功（プロキシ経由）');
+                return audioData;
+            } else {
+                throw new Error('セキュアAPIクライアントが利用できません');
             }
-            
-            // 音声合成リクエスト
-            const audioUrl = `${this.apiEndpoint}/audio/?${params.toString()}`;
-            console.log('VOICEVOXSpeech: 音声合成URL', audioUrl);
-            
-            const response = await fetch(audioUrl, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'audio/wav,audio/*'
-                },
-                signal: AbortSignal.timeout(20000) // 20秒でタイムアウト（長いテキストの場合に対応）
-            });
-            
-            if (!response.ok) {
-                // エラーレスポンスの解析を試みる
-                const errorText = await response.text();
-                console.error('VOICEVOXSpeech: 音声合成エラーレスポンス', errorText);
-                
-                if (errorText.includes('invalidApiKey')) {
-                    throw new Error('VOICEVOXSpeech: 不正なAPIキーです');
-                } else if (errorText.includes('notEnoughPoints')) {
-                    throw new Error('VOICEVOXSpeech: APIポイントが不足しています');
-                } else if (errorText.includes('failed')) {
-                    throw new Error('VOICEVOXSpeech: 音声合成に失敗しました');
-                } else {
-                    throw new Error(`VOICEVOXSpeech: 音声合成エラー: ${response.status} ${response.statusText}`);
-                }
-            }
-            
-            return await response.arrayBuffer();
         } catch (error) {
             console.error('VOICEVOXSpeech: 音声合成処理エラー:', error);
-            this.showErrorMessage(`VOICEVOX音声合成に失敗しました: ${error.message}`);
+            
+            // エラータイプ別の詳細メッセージ
+            let userMessage = '';
+            if (error.message.includes('Authentication failed')) {
+                userMessage = 'VOICEVOX APIキーが無効です。設定を確認してください。';
+            } else if (error.message.includes('Rate limit exceeded')) {
+                userMessage = 'VOICEVOX APIのレート制限に達しました。しばらく待ってからお試しください。';
+            } else {
+                userMessage = `VOICEVOX音声合成に失敗しました: ${error.message}`;
+            }
+            
+            this.showErrorMessage(userMessage);
             return null;
         }
     }

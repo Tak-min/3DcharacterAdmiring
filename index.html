@@ -6,7 +6,18 @@
     <title>3Dキャラクター対話 | AI Companion</title>
     
     <!-- スタイルシート -->
-    <link rel="stylesheet" href="css/reset.css">
+    <link rel=    <!-- JavaScript モジュール -->
+    <script src="js/config.js"></script>
+    <script src="js/secure-api-client.js"></script>
+    <script src="js/vrm-loader.js"></script>
+    <script src="js/voicevox.js"></script>
+    <script src="js/nijivoice.js"></script>
+    <script src="js/voice-manager.js"></script>
+    <script src="js/gemini-api.js"></script>
+    <script src="js/motion-controller.js"></script>
+    <script src="js/ui-controller.js"></script>
+    <script src="js/main.js"></script>
+    <script href="css/reset.css"></script>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/voice-controls.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
@@ -145,7 +156,7 @@
                     <div class="setting-item">
                         <label for="gemini-api-key">Gemini APIキー</label>
                         <input type="password" id="gemini-api-key" placeholder="Gemini APIキーを入力してください">
-                        <small>Google AI Studio (https://aistudio.google.com/app/apikey) から取得</small>
+                        <small>Google AI Studio (https://aistudio.google.com/) から取得</small>
                     </div>
                     <div class="setting-item">
                         <label for="nijivoice-api-key">にじボイス APIキー</label>

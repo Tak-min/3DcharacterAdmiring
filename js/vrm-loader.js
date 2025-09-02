@@ -112,6 +112,15 @@ class VRMController {
                                 if (vrm.blendShapeProxy) {
                                     vrm.blendShapeProxy.reset();
                                 }
+                                
+                                // LookAt機能の安全な初期化
+                                if (vrm.lookAt && vrm.lookAt.target) {
+                                    // ターゲットが有効かチェック
+                                    if (typeof vrm.lookAt.target.getWorldPosition !== 'function') {
+                                        console.warn('LookAt target missing getWorldPosition method, disabling LookAt');
+                                        vrm.lookAt = null;
+                                    }
+                                }
                             } else {
                                 // VRMではない通常のglTFモデルの場合
                                 gltf.scene.rotation.y = Math.PI;
@@ -119,7 +128,8 @@ class VRMController {
                                 this.currentVrm = {
                                     scene: gltf.scene,
                                     blendShapeProxy: null,
-                                    lookAt: null
+                                    lookAt: null,
+                                    update: function() {} // 空のupdateメソッドを追加
                                 };
                             }
                             
@@ -411,13 +421,25 @@ class VRMController {
         
         // VRMモデルの更新
         if (this.currentVrm) {
-            // LookAtの更新
-            if (this.currentVrm.lookAt) {
-                this.currentVrm.lookAt.update();
+            try {
+                // LookAtの更新（安全にチェック）
+                if (this.currentVrm.lookAt && 
+                    this.currentVrm.lookAt.target && 
+                    typeof this.currentVrm.lookAt.target.getWorldPosition === 'function') {
+                    this.currentVrm.lookAt.update();
+                }
+                
+                // VRMアニメーションの更新（安全にチェック）
+                if (typeof this.currentVrm.update === 'function') {
+                    this.currentVrm.update(delta);
+                }
+            } catch (error) {
+                console.warn('VRM update error:', error);
+                // エラーが発生した場合はLookAtを無効化
+                if (this.currentVrm.lookAt) {
+                    this.currentVrm.lookAt = null;
+                }
             }
-            
-            // VRMアニメーションの更新
-            this.currentVrm.update(delta);
         }
         
         // レンダリング

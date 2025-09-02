@@ -203,11 +203,44 @@ document.addEventListener('DOMContentLoaded', () => {
 /**
  * エラーハンドリング
  */
+let errorCount = 0;
+let lastErrorTime = 0;
+const ERROR_THROTTLE_TIME = 1000; // 1秒間隔でエラーを制限
+
 window.onerror = function(message, source, lineno, colno, error) {
+    const currentTime = Date.now();
+    
+    // 同じエラーが短時間で大量発生している場合は抑制
+    if (currentTime - lastErrorTime < ERROR_THROTTLE_TIME) {
+        errorCount++;
+        if (errorCount > 5) {
+            console.warn('Too many errors detected, throttling error messages');
+            return true; // エラーを抑制
+        }
+    } else {
+        errorCount = 0;
+    }
+    
+    lastErrorTime = currentTime;
+    
     console.error('Global error:', error);
     
-    // UIが初期化されている場合はエラーメッセージを表示
-    if (window.uiController) {
+    // VRM関連のエラーの場合は特別処理
+    if (message && message.includes('getWorldPosition') && window.vrmLoader) {
+        console.warn('VRM LookAt error detected, attempting to disable LookAt...');
+        try {
+            if (window.vrmLoader.currentVrm && window.vrmLoader.currentVrm.lookAt) {
+                window.vrmLoader.currentVrm.lookAt = null;
+                console.info('VRM LookAt disabled due to error');
+            }
+        } catch (e) {
+            console.error('Failed to disable VRM LookAt:', e);
+        }
+        return true; // エラーを処理済みとする
+    }
+    
+    // UIが初期化されている場合はエラーメッセージを表示（制限付き）
+    if (window.uiController && errorCount < 3) {
         window.uiController.addErrorMessage('エラーが発生しました: ' + message);
     }
     

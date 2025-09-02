@@ -21,8 +21,8 @@ class GeminiAPI {
      * @returns {Promise<string>} - AIの応答
      */
     async sendMessage(message) {
-        if (!this.apiKey) {
-            throw new Error('Gemini API key is not set. Please set it in the config.js file.');
+        if (!window.secureApiClient) {
+            throw new Error('Secure API client is not initialized');
         }
         
         this.isGenerating = true;
@@ -36,6 +36,7 @@ class GeminiAPI {
             
             // APIリクエストを構築
             const requestBody = {
+                model: this.model,
                 contents: formattedMessages,
                 generationConfig: {
                     temperature: CONFIG.gemini.temperature,
@@ -45,24 +46,8 @@ class GeminiAPI {
                 }
             };
             
-            // APIリクエスト
-            const response = await fetch(
-                `${this.apiEndpoint}${this.model}:generateContent?key=${this.apiKey}`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(requestBody)
-                }
-            );
-            
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Gemini API error: ${response.status} ${response.statusText} - ${errorText}`);
-            }
-            
-            const data = await response.json();
+            // セキュアAPIクライアント経由でリクエスト
+            const data = await window.secureApiClient.sendGeminiRequest(requestBody);
             
             // レスポンスからテキストを抽出
             const responseText = this.extractResponseText(data);
@@ -78,13 +63,15 @@ class GeminiAPI {
         } catch (error) {
             console.error('Error in sendMessage:', error);
             
-            // API URLの問題を検出した場合、モデル名を更新して再試行
-            if (error.message && error.message.includes('not found for API version')) {
+            // モデル名の問題を検出した場合の代替処理
+            if (error.message && (error.message.includes('not found for API version') || error.message.includes('Model not found'))) {
                 console.log('Attempting with alternative model name...');
                 const originalModel = this.model;
                 
                 // 代替モデル名を試す
-                if (this.model === 'gemini-1.5-flash') {
+                if (this.model === 'gemini-2.0-flash') {
+                    this.model = 'gemini-1.5-flash';
+                } else if (this.model === 'gemini-1.5-flash') {
                     this.model = 'gemini-pro';
                 } else if (this.model === 'gemini-pro') {
                     this.model = 'gemini-1.0-pro';
@@ -93,22 +80,31 @@ class GeminiAPI {
                 }
                 
                 try {
-                    const result = await this.sendMessage(message);
-                    // 成功した場合、設定を更新
-                    CONFIG.gemini.model = this.model;
-                    saveSettings();
-                    return result;
+                    // 再帰的に再実行（ただし1回のみ）
+                    if (!this._retryAttempted) {
+                        this._retryAttempted = true;
+                        const result = await this.sendMessage(message);
+                        this._retryAttempted = false;
+                        
+                        // 成功した場合、設定を更新
+                        CONFIG.gemini.model = this.model;
+                        if (typeof saveSettings === 'function') {
+                            saveSettings();
+                        }
+                        return result;
+                    }
                 } catch (retryError) {
                     // 再試行も失敗した場合は元のモデルに戻す
                     this.model = originalModel;
                     console.error('Retry with alternative model failed:', retryError);
                 }
+                this._retryAttempted = false;
             }
             
             this.isGenerating = false;
             
             // エラーメッセージをチャット履歴に追加
-            const errorMessage = 'すみません、AIの応答を取得できませんでした。しばらく経ってからもう一度お試しください。';
+            const errorMessage = 'すみません、AIの応答を取得できませんでした。プロキシサーバーが利用可能か確認してください。';
             this.addToChatHistory('assistant', errorMessage);
             this.saveChatHistory();
             

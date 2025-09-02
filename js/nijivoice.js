@@ -67,64 +67,49 @@ class NijivoiceSpeech {
         try {
             console.log('NijivoiceSpeech: 話者リスト取得開始');
             
-            if (!this.apiKey) {
-                console.warn('NijivoiceSpeech: APIキーが設定されていません');
-                throw new Error('APIキーが設定されていません。config.jsファイルでにじボイスのAPIキーを設定してください。');
-            }
-            
-            const speakersUrl = `${this.apiEndpoint}/api/platform/v1/voice-actors`;
-            console.log('NijivoiceSpeech: 話者リスト取得URL', speakersUrl);
-            
-            const response = await fetch(speakersUrl, { 
-                headers: {
-                    'Accept': 'application/json',
-                    'x-api-key': this.apiKey
-                },
-                signal: AbortSignal.timeout(10000) // 10秒でタイムアウト
-            });
-            
-            if (!response.ok) {
-                throw new Error(`NijivoiceSpeech: 話者リスト取得エラー: ${response.status} ${response.statusText}`);
-            }
-            
-            const data = await response.json();
-            console.log('NijivoiceSpeech: 話者リスト取得成功', data);
-            
-            // 詳細な話者リスト情報をログに出力
-            if (data.voiceActors && data.voiceActors.length > 0) {
-                console.log(`NijivoiceSpeech: ${data.voiceActors.length}人の話者を取得しました`);
-                // 最初の1人だけ詳細表示
-                const firstActor = data.voiceActors[0];
-                console.log(`最初の話者: ${firstActor.name} (ID: ${firstActor.id})`);
-                if (firstActor.voiceStyles && firstActor.voiceStyles.length > 0) {
-                    console.log(`  - ${firstActor.voiceStyles.length}個のスタイルが利用可能`);
+            // セキュアAPIクライアント経由で取得
+            if (window.secureApiClient) {
+                const data = await window.secureApiClient.getNijivoiceVoiceActors();
+                console.log('NijivoiceSpeech: 話者リスト取得成功（プロキシ経由）', data);
+                
+                // 詳細な話者リスト情報をログに出力
+                if (data.voiceActors && data.voiceActors.length > 0) {
+                    console.log(`NijivoiceSpeech: ${data.voiceActors.length}人の話者を取得しました`);
+                    // 最初の1人だけ詳細表示
+                    const firstActor = data.voiceActors[0];
+                    console.log(`最初の話者: ${firstActor.name} (ID: ${firstActor.id})`);
+                    if (firstActor.voiceStyles && firstActor.voiceStyles.length > 0) {
+                        console.log(`  - ${firstActor.voiceStyles.length}個のスタイルが利用可能`);
+                    }
                 }
-            }
-            
-            // にじボイス形式のデータをVOICEVOX形式に変換
-            this.speakerList = this.convertSpeakerFormat(data.voiceActors || []);
-            
-            // APIから取得した最初の話者IDを使用（必ずUUIDを使用）
-            if (this.speakerList.length > 0 && this.speakerList[0].styles.length > 0) {
-                // 最初の話者のUUIDを取得（数値IDではなく）
-                const firstActor = data.voiceActors[0];
-                const firstSpeakerId = firstActor.id; // UUIDを直接使用
-                console.log('NijivoiceSpeech: 最初の話者UUIDを使用します:', firstSpeakerId);
-                this.speakerId = firstSpeakerId;
-                CONFIG.nijivoice.defaultSpeakerId = firstSpeakerId;
+                
+                // にじボイス形式のデータをVOICEVOX形式に変換
+                this.speakerList = this.convertSpeakerFormat(data.voiceActors || []);
+                
+                // APIから取得した最初の話者IDを使用（必ずUUIDを使用）
+                if (this.speakerList.length > 0 && this.speakerList[0].styles.length > 0) {
+                    // 最初の話者のUUIDを取得（数値IDではなく）
+                    const firstActor = data.voiceActors[0];
+                    const firstSpeakerId = firstActor.id; // UUIDを直接使用
+                    console.log('NijivoiceSpeech: 最初の話者UUIDを使用します:', firstSpeakerId);
+                    this.speakerId = firstSpeakerId;
+                    CONFIG.nijivoice.defaultSpeakerId = firstSpeakerId;
+                } else {
+                    console.warn('NijivoiceSpeech: 有効な話者が見つかりません');
+                    // デフォルトの話者リストにフォールバック
+                    this.useDefaultSpeakerList();
+                    if (this.speakerList.length > 0) {
+                        this.speakerId = this.speakerList[0].styles[0].id;
+                    }
+                }
+                
+                // スピーカー選択フォームを更新
+                this.updateSpeakerSelect();
+                
+                return this.speakerList;
             } else {
-                console.warn('NijivoiceSpeech: 有効な話者が見つかりません');
-                // デフォルトの話者リストにフォールバック
-                this.useDefaultSpeakerList();
-                if (this.speakerList.length > 0) {
-                    this.speakerId = this.speakerList[0].styles[0].id;
-                }
+                throw new Error('セキュアAPIクライアントが利用できません');
             }
-            
-            // スピーカー選択フォームを更新
-            this.updateSpeakerSelect();
-            
-            return this.speakerList;
         } catch (error) {
             console.error('NijivoiceSpeech: 話者リスト取得処理エラー:', error);
             this.showErrorMessage(`にじボイスサーバーに接続できませんでした: ${error.message}`);
@@ -270,12 +255,6 @@ class NijivoiceSpeech {
             return null;
         }
         
-        if (!this.apiKey || this.apiKey.trim() === '') {
-            console.warn('NijivoiceSpeech: APIキーが設定されていません');
-            this.showErrorMessage('にじボイスのAPIキーが設定されていません。設定画面から設定してください。');
-            return null;
-        }
-        
         try {
             console.log('Synthesizing with NijiVoice:', text.substring(0, 20) + '...');
             
@@ -299,77 +278,39 @@ class NijivoiceSpeech {
                 format: 'mp3'
             };
             
-            // 音声合成リクエスト
-            const generateUrl = `${this.apiEndpoint}/api/platform/v1/voice-actors/${this.speakerId}/generate-voice`;
-            console.log('NijivoiceSpeech: 音声合成URL', generateUrl);
             console.log('NijivoiceSpeech: リクエストデータ', requestData);
             
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 15000); // 15秒でタイムアウト
-            
-            const response = await fetch(generateUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'x-api-key': this.apiKey
-                },
-                body: JSON.stringify(requestData),
-                signal: controller.signal
-            });
-            
-            clearTimeout(timeoutId);
-            
-            if (!response.ok) {
-                // エラーレスポンスの詳細解析
-                let errorMessage = `ステータスコード: ${response.status}`;
-                let errorDetails = '';
+            // セキュアAPIクライアント経由で音声合成
+            if (window.secureApiClient) {
+                const responseData = await window.secureApiClient.generateNijivoiceVoice(this.speakerId, requestData);
+                console.log('NijivoiceSpeech: 音声合成レスポンス（プロキシ経由）', responseData);
                 
-                try {
-                    const errorData = await response.json();
-                    errorMessage = errorData.message || errorData.error || errorMessage;
-                    errorDetails = JSON.stringify(errorData, null, 2);
-                } catch (e) {
-                    // JSONではない場合はテキストを取得
-                    try {
-                        errorDetails = await response.text();
-                        errorMessage = errorDetails || errorMessage;
-                    } catch (e2) {
-                        // テキスト取得も失敗した場合は元のエラーメッセージを使用
-                    }
+                if (!responseData.generatedVoice) {
+                    throw new Error('NijivoiceSpeech: generatedVoiceが見つかりません');
                 }
                 
-                console.error('NijivoiceSpeech: APIエラー詳細:', errorDetails);
-                throw new Error(`音声合成エラー: ${errorMessage}`);
+                // 音声ファイルURLの詳細をログ出力
+                const generatedVoice = responseData.generatedVoice;
+                console.log('=== にじボイス音声ファイルURL情報 ===');
+                console.log('audioFileUrl:', generatedVoice.audioFileUrl);
+                console.log('audioFileDownloadUrl:', generatedVoice.audioFileDownloadUrl);
+                console.log('その他のプロパティ:', Object.keys(generatedVoice));
+                console.log('=====================================');
+                
+                // どちらのURLを使用するか判定
+                const audioUrl = generatedVoice.audioFileDownloadUrl || generatedVoice.audioFileUrl;
+                if (!audioUrl) {
+                    throw new Error('NijivoiceSpeech: 音声ファイルのURLが見つかりません');
+                }
+                
+                console.log('NijivoiceSpeech: 使用する音声URL:', audioUrl);
+                
+                // Audio要素を使用してCORSエラーを回避
+                console.log('NijivoiceSpeech: Audio要素で音声再生...');
+                return this.playAudioDirectly(audioUrl);
+            } else {
+                throw new Error('セキュアAPIクライアントが利用できません');
             }
-            
-            // 音声ファイルのURLを取得
-            const responseData = await response.json();
-            console.log('NijivoiceSpeech: 音声合成レスポンス', responseData);
-            
-            if (!responseData.generatedVoice) {
-                throw new Error('NijivoiceSpeech: generatedVoiceが見つかりません');
-            }
-            
-            // 音声ファイルURLの詳細をログ出力
-            const generatedVoice = responseData.generatedVoice;
-            console.log('=== にじボイス音声ファイルURL情報 ===');
-            console.log('audioFileUrl:', generatedVoice.audioFileUrl);
-            console.log('audioFileDownloadUrl:', generatedVoice.audioFileDownloadUrl);
-            console.log('その他のプロパティ:', Object.keys(generatedVoice));
-            console.log('=====================================');
-            
-            // どちらのURLを使用するか判定
-            const audioUrl = generatedVoice.audioFileDownloadUrl || generatedVoice.audioFileUrl;
-            if (!audioUrl) {
-                throw new Error('NijivoiceSpeech: 音声ファイルのURLが見つかりません');
-            }
-            
-            console.log('NijivoiceSpeech: 使用する音声URL:', audioUrl);
-            
-            // Audio要素を使用してCORSエラーを回避
-            console.log('NijivoiceSpeech: Audio要素で音声再生...');
-            return this.playAudioDirectly(audioUrl);
         } catch (error) {
             console.error('NijivoiceSpeech: 音声合成処理エラー:', error);
             
@@ -379,9 +320,9 @@ class NijivoiceSpeech {
                 userMessage = 'にじボイス音声合成がタイムアウトしました。もう一度お試しください。';
             } else if (error.message.includes('404')) {
                 userMessage = 'にじボイス話者IDが見つかりません。設定を確認してください。';
-            } else if (error.message.includes('401') || error.message.includes('403')) {
+            } else if (error.message.includes('Authentication failed')) {
                 userMessage = 'にじボイスAPIキーが無効です。設定を確認してください。';
-            } else if (error.message.includes('429')) {
+            } else if (error.message.includes('Rate limit exceeded')) {
                 userMessage = 'にじボイスAPIのレート制限に達しました。しばらく待ってからお試しください。';
             } else {
                 userMessage = `にじボイス音声合成に失敗しました: ${error.message || 'エラーが発生しました'}`;
