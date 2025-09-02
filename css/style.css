@@ -1,0 +1,427 @@
+/* メインスタイル */
+:root {
+  --primary-color: #7e57c2;
+  --primary-light: #b085f5;
+  --primary-dark: #4d2c91;
+  --secondary-color: #ff7043;
+  --background-color: #f8f9fa;
+  --card-color: #ffffff;
+  --text-primary: #212121;
+  --text-secondary: #757575;
+  --border-color: #e0e0e0;
+  --success-color: #4caf50;
+  --warning-color: #ff9800;
+  --error-color: #f44336;
+  --box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  --transition-fast: 0.2s ease;
+  --transition-normal: 0.3s ease;
+  --border-radius-sm: 4px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 16px;
+  --header-height: 60px;
+  --footer-height: 0px;
+  --max-width: 1440px;
+}
+
+/* ダークモード対応 */
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="auto"] {
+    --background-color: #121212;
+    --card-color: #1e1e1e;
+    --text-primary: #f0f0f0;
+    --text-secondary: #bdbdbd;
+    --border-color: #424242;
+    --box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    --primary-light: #9966FF;
+  }
+}
+
+:root[data-theme="dark"] {
+  --background-color: #121212;
+  --card-color: #1e1e1e;
+  --text-primary: #f0f0f0;
+  --text-secondary: #bdbdbd;
+  --border-color: #424242;
+  --box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  --primary-light: #9966FF;
+}
+
+body {
+  background-color: var(--background-color);
+  color: var(--text-primary);
+  transition: background-color var(--transition-normal), color var(--transition-normal);
+}
+
+/* アプリのコンテナ */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ヘッダー */
+.app-header {
+  height: var(--header-height);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 1.5rem;
+  background-color: var(--card-color);
+  box-shadow: var(--box-shadow);
+  z-index: 10;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+.settings-button {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color var(--transition-fast);
+}
+
+.settings-button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.material-symbols-rounded {
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* メインコンテンツ */
+.app-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 3Dキャラクター表示エリア */
+.character-container {
+  flex: 2;
+  position: relative;
+  background-color: #f0f2f5;
+  overflow: hidden;
+}
+
+#vrm-container {
+  width: 100%;
+  height: 100%;
+}
+
+.model-controls {
+  position: absolute;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.5rem;
+  z-index: 5;
+}
+
+.control-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: var(--card-color);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--box-shadow);
+  color: var(--primary-color);
+  font-weight: 500;
+  transition: all var(--transition-fast);
+}
+
+.control-button:hover {
+  background-color: var(--primary-light);
+  color: white;
+}
+
+.control-button .material-symbols-rounded {
+  font-size: 1.2rem;
+}
+
+/* チャットインターフェース */
+.chat-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--card-color);
+  border-top: 1px solid var(--border-color);
+  min-height: 200px;
+  max-height: 40vh;
+}
+
+.chat-messages {
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.message {
+  max-width: 80%;
+  padding: 0.8rem 1rem;
+  border-radius: var(--border-radius-md);
+  animation: fadeIn 0.3s ease;
+}
+
+.message-user {
+  align-self: flex-end;
+  background-color: var(--primary-light);
+  color: white;
+  border-radius: var(--border-radius-md) var(--border-radius-md) 0 var(--border-radius-md);
+}
+
+.message-ai {
+  align-self: flex-start;
+  background-color: var(--primary-light);
+  color: var(--text-primary);
+  border-radius: var(--border-radius-md) var(--border-radius-md) var(--border-radius-md) 0;
+}
+
+.chat-input-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+#user-input {
+  flex: 1;
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  resize: none;
+  max-height: 120px;
+  transition: all var(--transition-fast);
+}
+
+#user-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+#send-button, #voice-button {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--primary-color);
+  color: white;
+  border-radius: 50%;
+  transition: all var(--transition-fast);
+}
+
+#send-button:hover, #voice-button:hover {
+  background-color: var(--primary-dark);
+}
+
+/* 設定パネル */
+.settings-panel {
+  position: fixed;
+  top: 0;
+  right: -350px;
+  width: 350px;
+  height: 100vh;
+  background-color: var(--card-color);
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+  z-index: 20;
+  transition: right var(--transition-normal);
+  overflow-y: auto;
+}
+
+.settings-panel.open {
+  right: 0;
+}
+
+.settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.settings-header h2 {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.close-button {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color var(--transition-fast);
+}
+
+.close-button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.settings-content {
+  padding: 1.5rem;
+}
+
+.setting-group {
+  margin-bottom: 2rem;
+}
+
+.setting-group h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--text-secondary);
+}
+
+.setting-item {
+  margin-bottom: 1rem;
+}
+
+.setting-item label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.setting-item select, .setting-item input:not([type="range"]), .setting-item textarea {
+  width: 100%;
+  padding: 0.8rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  background-color: var(--card-color);
+  color: var(--text-primary);
+}
+
+.setting-item select:focus, .setting-item input:focus, .setting-item textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.setting-item input[type="range"] {
+  width: 80%;
+  vertical-align: middle;
+}
+
+.range-value {
+  display: inline-block;
+  width: 40px;
+  text-align: center;
+}
+
+.setting-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 2rem;
+}
+
+.primary-button, .secondary-button {
+  padding: 0.8rem 1.5rem;
+  border-radius: var(--border-radius-md);
+  font-weight: 500;
+  transition: all var(--transition-fast);
+}
+
+.primary-button {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.primary-button:hover {
+  background-color: var(--primary-dark);
+}
+
+.secondary-button {
+  background-color: transparent;
+  border: 1px solid var(--border-color);
+}
+
+.secondary-button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* アニメーション */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ローディングインジケータ */
+.loading-indicator {
+  display: inline-block;
+  margin-left: 0.5rem;
+}
+
+.loading-indicator span {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background-color: var(--text-secondary);
+  border-radius: 50%;
+  animation: loadingDots 1.4s infinite ease-in-out both;
+}
+
+.loading-indicator span:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.loading-indicator span:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes loadingDots {
+  0%, 80%, 100% { transform: scale(0); }
+  40% { transform: scale(1); }
+}
+
+/* レスポンシブデザイン */
+@media (min-width: 768px) {
+  .app-content {
+    flex-direction: row;
+  }
+  
+  .chat-container {
+    max-width: 450px;
+    max-height: none;
+    border-top: none;
+    border-left: 1px solid var(--border-color);
+  }
+}
+
+@media (max-width: 767px) {
+  .settings-panel {
+    width: 100%;
+    right: -100%;
+  }
+}
+
+/* アクセシビリティ強化 */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
