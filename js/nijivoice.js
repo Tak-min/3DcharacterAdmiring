@@ -10,6 +10,7 @@ class NijivoiceSpeech {
         this.speed = CONFIG.nijivoice.defaultSpeed;
         this.audioContext = null;
         this.audioSource = null;
+        this.currentAudioElement = null; // Audio要素の参照
         this.isSpeaking = false;
         this.speakerList = [];
         this.mouthMovementCallbacks = [];
@@ -342,16 +343,9 @@ class NijivoiceSpeech {
             
             console.log('NijivoiceSpeech: 使用する音声URL:', audioUrl);
             
-            // 音声ファイルを直接ダウンロード
-            console.log('NijivoiceSpeech: 音声ファイルをダウンロード中...');
-            const audioResponse = await fetch(audioUrl);
-            
-            if (!audioResponse.ok) {
-                throw new Error(`NijivoiceSpeech: 音声ファイルのダウンロードエラー: ${audioResponse.status} ${audioResponse.statusText}`);
-            }
-            
-            console.log('NijivoiceSpeech: 音声ファイルダウンロード完了');
-            return await audioResponse.arrayBuffer();
+            // Audio要素を使用してCORSエラーを回避
+            console.log('NijivoiceSpeech: Audio要素で音声再生...');
+            return this.playAudioDirectly(audioUrl);
         } catch (error) {
             console.error('NijivoiceSpeech: 音声合成処理エラー:', error);
             this.showErrorMessage(`にじボイス音声合成に失敗しました: ${error.message || 'エラーが発生しました'}`);
@@ -365,14 +359,17 @@ class NijivoiceSpeech {
      * @returns {Promise} - 再生完了時に解決するPromise
      */
     async playAudio(audioData) {
-        if (!audioData || !this.audioContext) {
-            if (!this.audioContext) {
-                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            }
+        // Audio要素で再生している場合（空のArrayBuffer）はスキップ
+        if (!audioData || audioData.byteLength === 0) {
+            console.log('NijivoiceSpeech: Audio要素で再生中のため、Web Audio APIはスキップします');
             return Promise.resolve();
         }
         
-        return new Promise((resolve) => {
+        if (!this.audioContext) {
+            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        
+        return new Promise((resolve, reject) => {
             // 既に再生中の場合は停止
             this.stopAudio();
             
@@ -439,8 +436,9 @@ class NijivoiceSpeech {
                 this.audioSource.start(0);
                 this.isSpeaking = true;
             }, (error) => {
-                console.error('Error decoding audio data:', error);
-                resolve();
+                console.error('NijivoiceSpeech: Web Audio API デコードエラー:', error);
+                this.isSpeaking = false;
+                reject(error);
             });
         });
     }
@@ -542,6 +540,81 @@ class NijivoiceSpeech {
             chatMessages.appendChild(messageElement);
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
+    }
+
+    /**
+     * Audio要素を使用して音声を直接再生（CORS回避）
+     * @param {string} audioUrl - 音声ファイルのURL
+     * @returns {Promise<ArrayBuffer>} - 音声データ（リップシンク用）
+     */
+    async playAudioDirectly(audioUrl) {
+        return new Promise((resolve, reject) => {
+            const audio = new Audio();
+            
+            // 既存の音声を停止
+            this.stopAudio();
+            this.currentAudioElement = audio;
+            
+            audio.onloadeddata = () => {
+                console.log('NijivoiceSpeech: 音声データ読み込み完了');
+                
+                // 音声を再生
+                audio.play().then(() => {
+                    console.log('NijivoiceSpeech: 音声再生開始');
+                    this.isSpeaking = true;
+                    
+                    // 再生終了時の処理
+                    audio.onended = () => {
+                        console.log('NijivoiceSpeech: 音声再生終了');
+                        this.isSpeaking = false;
+                        this.currentAudioElement = null;
+                    };
+                    
+                    // リップシンク用のダミーデータを返す
+                    // Audio要素で再生するため、ArrayBufferは不要
+                    resolve(new ArrayBuffer(0));
+                }).catch(error => {
+                    console.error('NijivoiceSpeech: 音声再生エラー:', error);
+                    this.isSpeaking = false;
+                    this.currentAudioElement = null;
+                    reject(error);
+                });
+            };
+            
+            audio.onerror = (error) => {
+                console.error('NijivoiceSpeech: 音声読み込みエラー:', error);
+                this.isSpeaking = false;
+                this.currentAudioElement = null;
+                reject(new Error('音声ファイルの読み込みに失敗しました'));
+            };
+            
+            // 音声URLを設定（これで読み込み開始）
+            audio.src = audioUrl;
+        });
+    }
+
+    /**
+     * 現在の音声再生を停止（Audio要素対応版）
+     */
+    stopAudio() {
+        // Audio要素での再生を停止
+        if (this.currentAudioElement) {
+            this.currentAudioElement.pause();
+            this.currentAudioElement.currentTime = 0;
+            this.currentAudioElement = null;
+        }
+        
+        // Web Audio APIでの再生を停止
+        if (this.audioSource) {
+            try {
+                this.audioSource.stop();
+            } catch (e) {
+                // 既に停止している場合はエラーを無視
+            }
+            this.audioSource = null;
+        }
+        
+        this.isSpeaking = false;
     }
 }
 

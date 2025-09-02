@@ -82,6 +82,15 @@ function loadSettings() {
         const parsedSettings = JSON.parse(savedSettings);
         
         // 保存された設定で上書き
+        if (parsedSettings.gemini) {
+            CONFIG.gemini.apiKey = parsedSettings.gemini.apiKey || CONFIG.gemini.apiKey;
+            CONFIG.gemini.temperature = parsedSettings.gemini.temperature || CONFIG.gemini.temperature;
+        }
+        
+        if (parsedSettings.nijivoice) {
+            CONFIG.nijivoice.apiKey = parsedSettings.nijivoice.apiKey || CONFIG.nijivoice.apiKey;
+        }
+        
         if (parsedSettings.voicevox) {
             CONFIG.voicevox.defaultSpeakerId = parsedSettings.voicevox.defaultSpeakerId || CONFIG.voicevox.defaultSpeakerId;
             CONFIG.voicevox.defaultSpeed = parsedSettings.voicevox.defaultSpeed || CONFIG.voicevox.defaultSpeed;
@@ -107,6 +116,13 @@ function loadSettings() {
 // 設定を保存する
 function saveSettings() {
     const settingsToSave = {
+        gemini: {
+            apiKey: CONFIG.gemini.apiKey,
+            temperature: CONFIG.gemini.temperature,
+        },
+        nijivoice: {
+            apiKey: CONFIG.nijivoice.apiKey,
+        },
         voicevox: {
             defaultSpeakerId: CONFIG.voicevox.defaultSpeakerId,
             defaultSpeed: CONFIG.voicevox.defaultSpeed,
@@ -116,9 +132,6 @@ function saveSettings() {
         },
         character: {
             personality: CONFIG.character.personality,
-        },
-        gemini: {
-            temperature: CONFIG.gemini.temperature,
         }
     };
     

@@ -24,29 +24,8 @@ document.addEventListener('DOMContentLoaded', () => {
  * Gemini APIキーの確認
  */
 function checkApiKey() {
-    if (!CONFIG.gemini.apiKey) {
-        // APIキーが設定されていない場合、プロンプトで入力を促す
-        setTimeout(() => {
-            const apiKey = prompt(
-                '🔑 Gemini APIキーが設定されていません。\n' +
-                'https://aistudio.google.com/app/apikey から取得したAPIキーを入力してください。'
-            );
-            
-            if (apiKey) {
-                CONFIG.gemini.apiKey = apiKey;
-                if (window.geminiAPI) {
-                    window.geminiAPI.setApiKey(apiKey);
-                }
-                saveSettings();
-                window.uiController.showNotification('APIキーが設定されました');
-            } else {
-                window.uiController.addErrorMessage(
-                    'APIキーが設定されていないため、AIとの対話機能は使用できません。' +
-                    '設定パネルからAPIキーを設定してください。'
-                );
-            }
-        }, 1000);
-    }
+    // 設定画面でAPIキーを設定するため、初期チェックは不要
+    console.log('Gemini APIキー設定確認: 設定画面で行います');
 }
 
 /**

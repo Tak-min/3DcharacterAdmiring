@@ -14,6 +14,8 @@ class UIController {
         this.saveSettingsButton = document.getElementById('save-settings');
         this.resetSettingsButton = document.getElementById('reset-settings');
         this.themeSelect = document.getElementById('theme-select');
+        this.geminiApiKeyInput = document.getElementById('gemini-api-key');
+        this.nijivoiceApiKeyInput = document.getElementById('nijivoice-api-key');
         
         // 状態
         this.isListening = false;
@@ -29,6 +31,9 @@ class UIController {
         
         // テーマの初期化
         this.initTheme();
+        
+        // 設定画面の初期化
+        this.initSettingsPanel();
         
         // 入力フィールドの自動リサイズ設定
         this.setupAutoResize();
@@ -79,7 +84,7 @@ class UIController {
         // 設定を保存
         if (this.saveSettingsButton) {
             this.saveSettingsButton.addEventListener('click', () => {
-                saveSettings();
+                this.saveAllSettings();
                 this.settingsPanel.classList.remove('open');
                 this.showNotification('設定を保存しました');
             });
@@ -179,6 +184,72 @@ class UIController {
     changeTheme(theme) {
         document.documentElement.setAttribute('data-theme', theme);
         CONFIG.ui.theme = theme;
+        saveSettings();
+    }
+    
+    /**
+     * 設定画面の初期化
+     */
+    initSettingsPanel() {
+        // APIキーの設定
+        if (this.geminiApiKeyInput) {
+            this.geminiApiKeyInput.value = CONFIG.gemini.apiKey || '';
+        }
+        
+        if (this.nijivoiceApiKeyInput) {
+            this.nijivoiceApiKeyInput.value = CONFIG.nijivoice.apiKey || '';
+        }
+        
+        // テーマ設定の初期化
+        if (this.themeSelect) {
+            this.themeSelect.value = CONFIG.ui.theme;
+        }
+        
+        // 音声設定の初期化
+        const voiceSpeed = document.getElementById('voice-speed');
+        if (voiceSpeed) {
+            voiceSpeed.value = CONFIG.voicevox.defaultSpeed;
+            const rangeValue = voiceSpeed.nextElementSibling;
+            if (rangeValue) {
+                rangeValue.textContent = CONFIG.voicevox.defaultSpeed.toFixed(1);
+            }
+        }
+        
+        // キャラクター設定の初期化
+        const characterPersona = document.getElementById('character-persona');
+        if (characterPersona) {
+            characterPersona.value = CONFIG.character.personality;
+        }
+    }
+    
+    /**
+     * すべての設定を保存
+     */
+    saveAllSettings() {
+        // APIキーの保存
+        if (this.geminiApiKeyInput) {
+            const geminiKey = this.geminiApiKeyInput.value.trim();
+            if (geminiKey) {
+                CONFIG.gemini.apiKey = geminiKey;
+                if (window.geminiAPI) {
+                    window.geminiAPI.setApiKey(geminiKey);
+                }
+                console.log('Gemini APIキーを更新しました');
+            }
+        }
+        
+        if (this.nijivoiceApiKeyInput) {
+            const nijivoiceKey = this.nijivoiceApiKeyInput.value.trim();
+            if (nijivoiceKey) {
+                CONFIG.nijivoice.apiKey = nijivoiceKey;
+                if (window.nijivoiceSpeech) {
+                    window.nijivoiceSpeech.apiKey = nijivoiceKey;
+                }
+                console.log('にじボイス APIキーを更新しました');
+            }
+        }
+        
+        // 従来の設定保存処理
         saveSettings();
     }
     
