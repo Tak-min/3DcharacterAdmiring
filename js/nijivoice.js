@@ -28,6 +28,13 @@ class NijivoiceSpeech {
         console.log('NijivoiceSpeech: APIエンドポイント:', this.apiEndpoint);
         console.log('NijivoiceSpeech: APIキー設定状況:', this.apiKey ? 'APIキー設定済み' : 'APIキー未設定');
         
+        // APIキーの確認
+        if (!this.apiKey || this.apiKey.trim() === '') {
+            console.warn('NijivoiceSpeech: APIキーが設定されていません。設定画面から設定してください。');
+            this.useDefaultSpeakerList();
+            return;
+        }
+        
         // Web Audio APIのセットアップ
         this.initAudio();
         
@@ -258,7 +265,14 @@ class NijivoiceSpeech {
      * @returns {Promise<ArrayBuffer>} - 音声データ
      */
     async synthesize(text) {
-        if (!text || text.trim() === '' || !this.apiKey) {
+        if (!text || text.trim() === '') {
+            console.log('NijivoiceSpeech: テキストが空のため、音声合成をスキップします');
+            return null;
+        }
+        
+        if (!this.apiKey || this.apiKey.trim() === '') {
+            console.warn('NijivoiceSpeech: APIキーが設定されていません');
+            this.showErrorMessage('にじボイスのAPIキーが設定されていません。設定画面から設定してください。');
             return null;
         }
         
@@ -290,6 +304,9 @@ class NijivoiceSpeech {
             console.log('NijivoiceSpeech: 音声合成URL', generateUrl);
             console.log('NijivoiceSpeech: リクエストデータ', requestData);
             
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 15000); // 15秒でタイムアウト
+            
             const response = await fetch(generateUrl, {
                 method: 'POST',
                 headers: {
@@ -298,25 +315,32 @@ class NijivoiceSpeech {
                     'x-api-key': this.apiKey
                 },
                 body: JSON.stringify(requestData),
-                signal: AbortSignal.timeout(15000) // 15秒でタイムアウト
+                signal: controller.signal
             });
             
+            clearTimeout(timeoutId);
+            
             if (!response.ok) {
-                // エラーレスポンスの解析を試みる
+                // エラーレスポンスの詳細解析
                 let errorMessage = `ステータスコード: ${response.status}`;
+                let errorDetails = '';
+                
                 try {
                     const errorData = await response.json();
                     errorMessage = errorData.message || errorData.error || errorMessage;
+                    errorDetails = JSON.stringify(errorData, null, 2);
                 } catch (e) {
                     // JSONではない場合はテキストを取得
                     try {
-                        errorMessage = await response.text();
+                        errorDetails = await response.text();
+                        errorMessage = errorDetails || errorMessage;
                     } catch (e2) {
                         // テキスト取得も失敗した場合は元のエラーメッセージを使用
                     }
                 }
                 
-                throw new Error(`NijivoiceSpeech: 音声合成エラー: ${errorMessage}`);
+                console.error('NijivoiceSpeech: APIエラー詳細:', errorDetails);
+                throw new Error(`音声合成エラー: ${errorMessage}`);
             }
             
             // 音声ファイルのURLを取得
@@ -348,7 +372,22 @@ class NijivoiceSpeech {
             return this.playAudioDirectly(audioUrl);
         } catch (error) {
             console.error('NijivoiceSpeech: 音声合成処理エラー:', error);
-            this.showErrorMessage(`にじボイス音声合成に失敗しました: ${error.message || 'エラーが発生しました'}`);
+            
+            // エラータイプ別の詳細メッセージ
+            let userMessage = '';
+            if (error.name === 'AbortError') {
+                userMessage = 'にじボイス音声合成がタイムアウトしました。もう一度お試しください。';
+            } else if (error.message.includes('404')) {
+                userMessage = 'にじボイス話者IDが見つかりません。設定を確認してください。';
+            } else if (error.message.includes('401') || error.message.includes('403')) {
+                userMessage = 'にじボイスAPIキーが無効です。設定を確認してください。';
+            } else if (error.message.includes('429')) {
+                userMessage = 'にじボイスAPIのレート制限に達しました。しばらく待ってからお試しください。';
+            } else {
+                userMessage = `にじボイス音声合成に失敗しました: ${error.message || 'エラーが発生しました'}`;
+            }
+            
+            this.showErrorMessage(userMessage);
             return null;
         }
     }
@@ -524,6 +563,23 @@ class NijivoiceSpeech {
     }
     
     /**
+     * デバッグ情報を取得
+     * @returns {Object} - デバッグ情報
+     */
+    getDebugInfo() {
+        return {
+            apiKey: this.apiKey ? 'APIキー設定済み' : 'APIキー未設定',
+            speakerId: this.speakerId,
+            speakerListCount: this.speakerList.length,
+            isSpeaking: this.isSpeaking,
+            hasAudioContext: !!this.audioContext,
+            hasCurrentAudio: !!this.currentAudioElement,
+            apiEndpoint: this.apiEndpoint,
+            speed: this.speed
+        };
+    }
+
+    /**
      * エラーメッセージを表示
      * @param {string} message - エラーメッセージ
      */
@@ -540,6 +596,9 @@ class NijivoiceSpeech {
             chatMessages.appendChild(messageElement);
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
+        
+        // コンソールにもデバッグ情報を出力
+        console.log('NijivoiceSpeech Debug Info:', this.getDebugInfo());
     }
 
     /**
@@ -555,30 +614,55 @@ class NijivoiceSpeech {
             this.stopAudio();
             this.currentAudioElement = audio;
             
+            // Audio要素の設定
+            audio.crossOrigin = 'anonymous'; // CORS対応
+            audio.preload = 'auto';
+            
             audio.onloadeddata = () => {
                 console.log('NijivoiceSpeech: 音声データ読み込み完了');
                 
                 // 音声を再生
-                audio.play().then(() => {
-                    console.log('NijivoiceSpeech: 音声再生開始');
-                    this.isSpeaking = true;
-                    
-                    // 再生終了時の処理
-                    audio.onended = () => {
-                        console.log('NijivoiceSpeech: 音声再生終了');
+                const playPromise = audio.play();
+                
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        console.log('NijivoiceSpeech: 音声再生開始');
+                        this.isSpeaking = true;
+                        
+                        // 再生終了時の処理
+                        audio.onended = () => {
+                            console.log('NijivoiceSpeech: 音声再生終了');
+                            this.isSpeaking = false;
+                            this.currentAudioElement = null;
+                            
+                            // 完了コールバックを実行
+                            this.onEndCallbacks.forEach(callback => callback());
+                        };
+                        
+                        // リップシンク用のダミーデータを返す
+                        resolve(new ArrayBuffer(0));
+                    }).catch(error => {
+                        console.error('NijivoiceSpeech: 音声再生エラー (自動再生ポリシー):', error);
                         this.isSpeaking = false;
                         this.currentAudioElement = null;
+                        
+                        // ユーザーインタラクションが必要な場合の処理
+                        if (error.name === 'NotAllowedError') {
+                            this.showErrorMessage('音声再生には最初にページ上でクリックが必要です');
+                        }
+                        
+                        reject(error);
+                    });
+                } else {
+                    // 古いブラウザ対応
+                    this.isSpeaking = true;
+                    audio.onended = () => {
+                        this.isSpeaking = false;
+                        this.currentAudioElement = null;
+                        this.onEndCallbacks.forEach(callback => callback());
                     };
-                    
-                    // リップシンク用のダミーデータを返す
-                    // Audio要素で再生するため、ArrayBufferは不要
                     resolve(new ArrayBuffer(0));
-                }).catch(error => {
-                    console.error('NijivoiceSpeech: 音声再生エラー:', error);
-                    this.isSpeaking = false;
-                    this.currentAudioElement = null;
-                    reject(error);
-                });
+                }
             };
             
             audio.onerror = (error) => {
@@ -586,6 +670,13 @@ class NijivoiceSpeech {
                 this.isSpeaking = false;
                 this.currentAudioElement = null;
                 reject(new Error('音声ファイルの読み込みに失敗しました'));
+            };
+            
+            audio.onabort = () => {
+                console.log('NijivoiceSpeech: 音声読み込みが中断されました');
+                this.isSpeaking = false;
+                this.currentAudioElement = null;
+                reject(new Error('音声ファイルの読み込みが中断されました'));
             };
             
             // 音声URLを設定（これで読み込み開始）
@@ -620,7 +711,34 @@ class NijivoiceSpeech {
 
 // インスタンス作成とグローバル変数への登録
 document.addEventListener('DOMContentLoaded', () => {
-    // にじボイスのインスタンスを作成
-    console.log('NijivoiceSpeech: インスタンスを作成します');
-    window.nijivoiceSpeech = new NijivoiceSpeech();
+    try {
+        // にじボイスのインスタンスを作成
+        console.log('NijivoiceSpeech: インスタンスを作成します');
+        window.nijivoiceSpeech = new NijivoiceSpeech();
+        
+        // デバッグ用のグローバル関数
+        window.debugNijivoice = () => {
+            if (window.nijivoiceSpeech) {
+                console.log('NijivoiceSpeech Debug Info:', window.nijivoiceSpeech.getDebugInfo());
+            } else {
+                console.log('NijivoiceSpeech: インスタンスが作成されていません');
+            }
+        };
+        
+    } catch (error) {
+        console.error('NijivoiceSpeech: インスタンス作成エラー:', error);
+        
+        // エラー情報を画面に表示
+        const errorDiv = document.createElement('div');
+        errorDiv.style.cssText = 'position: fixed; top: 10px; right: 10px; background: #ff4444; color: white; padding: 10px; border-radius: 5px; z-index: 10000;';
+        errorDiv.textContent = `NijivoiceSpeech初期化エラー: ${error.message}`;
+        document.body.appendChild(errorDiv);
+        
+        // 5秒後に非表示
+        setTimeout(() => {
+            if (document.body.contains(errorDiv)) {
+                document.body.removeChild(errorDiv);
+            }
+        }, 5000);
+    }
 });

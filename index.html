@@ -63,6 +63,53 @@
                     </button>
                     <input type="file" id="vrm-input" accept=".vrm" style="display:none;">
                 </div>
+                
+                <!-- モーション制御パネル -->
+                <div class="motion-controls">
+                    <div class="motion-group">
+                        <h4>ジェスチャー</h4>
+                        <div class="motion-buttons">
+                            <button class="motion-btn" data-gesture="wave">
+                                <span class="material-symbols-rounded">waving_hand</span>
+                                手を振る
+                            </button>
+                            <button class="motion-btn" data-gesture="nod">
+                                <span class="material-symbols-rounded">check</span>
+                                うなずく
+                            </button>
+                            <button class="motion-btn" data-gesture="shake">
+                                <span class="material-symbols-rounded">close</span>
+                                首を振る
+                            </button>
+                            <button class="motion-btn" data-gesture="thumbsUp">
+                                <span class="material-symbols-rounded">thumb_up</span>
+                                いいね
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="motion-group">
+                        <h4>感情表現</h4>
+                        <div class="motion-buttons">
+                            <button class="motion-btn emotion-btn" data-emotion="happy">
+                                <span class="material-symbols-rounded">sentiment_very_satisfied</span>
+                                喜び
+                            </button>
+                            <button class="motion-btn emotion-btn" data-emotion="sad">
+                                <span class="material-symbols-rounded">sentiment_very_dissatisfied</span>
+                                悲しみ
+                            </button>
+                            <button class="motion-btn emotion-btn" data-emotion="surprised">
+                                <span class="material-symbols-rounded">sentiment_neutral</span>
+                                驚き
+                            </button>
+                            <button class="motion-btn emotion-btn" data-emotion="angry">
+                                <span class="material-symbols-rounded">sentiment_frustrated</span>
+                                怒り
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
             
             <!-- チャットインターフェース -->
@@ -145,6 +192,28 @@
                 </div>
                 
                 <div class="setting-group">
+                    <h3>モーション設定</h3>
+                    <div class="setting-item">
+                        <label>
+                            <input type="checkbox" id="auto-emotions" checked>
+                            感情表現の自動実行
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <label>
+                            <input type="checkbox" id="auto-gestures" checked>
+                            ジェスチャーの自動実行
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <label>
+                            <input type="checkbox" id="idle-motions" checked>
+                            アイドルモーション
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="setting-group">
                     <h3>表示設定</h3>
                     <div class="setting-item">
                         <label for="theme-select">テーマ</label>
@@ -171,6 +240,7 @@
     <script src="js/nijivoice.js"></script>
     <script src="js/voice-manager.js"></script>
     <script src="js/gemini-api.js"></script>
+    <script src="js/motion-controller.js"></script>
     <script src="js/ui-controller.js"></script>
     <script src="js/main.js"></script>
 </body>

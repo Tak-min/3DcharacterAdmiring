@@ -198,6 +198,9 @@ class VoiceManager {
         
         console.log(`VoiceManager: [${this.currentEngine}] 音声合成開始`, text.substring(0, 20) + '...');
         
+        // 音声開始前に感情解析とモーション実行
+        this.analyzeAndPlayMotion(text);
+        
         try {
             // 開始前にエンジンが有効かどうか再確認
             if (!this.engines[this.currentEngine]) {
@@ -223,6 +226,63 @@ class VoiceManager {
             }
             
             return Promise.resolve();
+        }
+    }
+    
+    /**
+     * テキストを解析して適切なモーションを実行
+     * @param {string} text - 解析するテキスト
+     */
+    analyzeAndPlayMotion(text) {
+        // モーション設定が無効な場合はスキップ
+        const autoEmotions = document.getElementById('auto-emotions')?.checked !== false;
+        const autoGestures = document.getElementById('auto-gestures')?.checked !== false;
+        
+        if (!autoEmotions && !autoGestures) return;
+        if (!window.motionController) return;
+        
+        console.log('VoiceManager: テキスト解析とモーション実行開始');
+        
+        // 感情キーワードの判定
+        const emotionPatterns = {
+            happy: /嬉しい|楽しい|よかった|ありがとう|素晴らしい|最高|😊|😄|🎉|😁/i,
+            sad: /悲しい|残念|つらい|困った|大変|申し訳|😢|😭|💧/i,
+            surprised: /驚き|びっくり|まさか|え[っ！？]|本当|信じられ|😲|😱|❗/i,
+            angry: /怒|腹立つ|むかつく|イライラ|😠|😡|💢/i
+        };
+        
+        // ジェスチャーキーワードの判定
+        const gesturePatterns = {
+            wave: /こんにちは|はじめまして|さようなら|また|👋/i,
+            nod: /はい|そうです|うん|そうそう|その通り|同感/i,
+            shake: /いいえ|違い|ちがう|だめ|ダメ|いや/i,
+            thumbsUp: /いいね|よし|グッド|素晴らしい|👍|Good/i
+        };
+        
+        // 感情解析と実行
+        if (autoEmotions) {
+            for (const [emotion, pattern] of Object.entries(emotionPatterns)) {
+                if (pattern.test(text)) {
+                    console.log(`VoiceManager: 感情「${emotion}」を検出`);
+                    setTimeout(() => {
+                        window.motionController.playEmotion(emotion, 0.7);
+                    }, 500); // 音声開始から少し遅らせる
+                    break;
+                }
+            }
+        }
+        
+        // ジェスチャー解析と実行
+        if (autoGestures) {
+            for (const [gesture, pattern] of Object.entries(gesturePatterns)) {
+                if (pattern.test(text)) {
+                    console.log(`VoiceManager: ジェスチャー「${gesture}」を検出`);
+                    setTimeout(() => {
+                        window.motionController.playGesture(gesture, 0.8);
+                    }, 1000); // 感情表現の後に実行
+                    break;
+                }
+            }
         }
     }
     

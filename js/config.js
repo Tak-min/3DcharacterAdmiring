@@ -4,7 +4,7 @@
 const CONFIG = {
     // Gemini API設定
     gemini: {
-        apiKey: '', // 実際のAPIキーをここに設定
+        apiKey: localStorage.getItem('gemini_api_key') || '', // ローカルストレージから取得
         model: 'gemini-2.0-flash', // 最新のモデル名
         apiEndpoint: 'https://generativelanguage.googleapis.com/v1/models/',
         maxTokens: 1024,
