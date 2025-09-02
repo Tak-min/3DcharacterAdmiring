@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Character Admiring - オプション</title>
+    <link rel="stylesheet" href="css/options.css">
+</head>
+<body>
+    <!-- Navigation Header -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <button class="back-button" id="backButton">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M19 12H5M12 19L5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                戻る
+            </button>
+            <h1 class="nav-title">オプション</h1>
+            <div></div> <!-- Spacer for centering -->
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="options-container">
+            <!-- User Account Section -->
+            <section class="option-section">
+                <h2>アカウント</h2>
+                <div class="option-item">
+                    <div class="option-info">
+                        <h3>ユーザー情報</h3>
+                        <p id="userEmail">読み込み中...</p>
+                    </div>
+                </div>
+                
+                <div class="option-item">
+                    <div class="option-info">
+                        <h3>ログアウト</h3>
+                        <p>アプリケーションからログアウトします</p>
+                    </div>
+                    <button class="option-button danger" id="logoutButton">
+                        ログアウト
+                    </button>
+                </div>
+            </section>
+
+            <!-- App Information Section -->
+            <section class="option-section">
+                <h2>アプリ情報</h2>
+                <div class="option-item">
+                    <div class="option-info">
+                        <h3>バージョン</h3>
+                        <p>3D Character Admiring v1.0 (MCP)</p>
+                    </div>
+                </div>
+                
+                <div class="option-item">
+                    <div class="option-info">
+                        <h3>技術スタック</h3>
+                        <p>Three.js, A-Frame, FastAPI, Gemini 2.0 Flash</p>
+                    </div>
+                </div>
+                
+                <div class="option-item">
+                    <div class="option-info">
+                        <h3>開発フェーズ</h3>
+                        <p>MCP (Minimum Viable Product) - 基本機能実装済み</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Future Features Preview -->
+            <section class="option-section">
+                <h2>今後の機能（開発予定）</h2>
+                <div class="option-item">
+                    <div class="option-info">
+                        <h3>音声対話</h3>
+                        <p>AssemblyAI × ElevenLabs TTSによる音声機能</p>
+                    </div>
+                    <span class="status-badge coming-soon">開発予定</span>
+                </div>
+                
+                <div class="option-item">
+                    <div class="option-info">
+                        <h3>キャラクターアニメーション</h3>
+                        <p>感情表現とインタラクティブなアニメーション</p>
+                    </div>
+                    <span class="status-badge coming-soon">開発予定</span>
+                </div>
+                
+                <div class="option-item">
+                    <div class="option-info">
+                        <h3>通貨システム</h3>
+                        <p>インタラクションによる通貨獲得とショップ機能</p>
+                    </div>
+                    <span class="status-badge coming-soon">開発予定</span>
+                </div>
+                
+                <div class="option-item">
+                    <div class="option-info">
+                        <h3>キャラクターパラメータ</h3>
+                        <p>親密度、感情、プロフィール管理</p>
+                    </div>
+                    <span class="status-badge coming-soon">開発予定</span>
+                </div>
+            </section>
+
+            <!-- Debug Information (MCP only) -->
+            <section class="option-section debug-section">
+                <h2>デバッグ情報</h2>
+                <div class="option-item">
+                    <div class="option-info">
+                        <h3>ローカルストレージ</h3>
+                        <p>認証情報とアプリデータの状態</p>
+                    </div>
+                    <button class="option-button secondary" id="debugButton">
+                        表示
+                    </button>
+                </div>
+                
+                <div class="option-item">
+                    <div class="option-info">
+                        <h3>チャット履歴クリア</h3>
+                        <p>会話履歴をリセットします</p>
+                    </div>
+                    <button class="option-button secondary" id="clearChatButton">
+                        クリア
+                    </button>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="modal hidden">
+        <div class="modal-content">
+            <h3 id="modalTitle">確認</h3>
+            <p id="modalMessage">この操作を実行しますか？</p>
+            <div class="modal-buttons">
+                <button class="modal-button cancel" id="modalCancel">キャンセル</button>
+                <button class="modal-button confirm" id="modalConfirm">実行</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Debug Modal -->
+    <div id="debugModal" class="modal hidden">
+        <div class="modal-content large">
+            <h3>デバッグ情報</h3>
+            <div class="debug-content">
+                <pre id="debugInfo"></pre>
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-button secondary" id="debugClose">閉じる</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/options.js"></script>
+</body>
+</html>
