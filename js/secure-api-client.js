@@ -21,7 +21,7 @@ class SecureApiClient {
         
         // ローカル開発環境
         if (hostname === 'localhost' || hostname === '127.0.0.1') {
-            return 'http://localhost:3001';
+            return 'http://localhost:3002';
         }
         
         // Cloudflare Pages や Netlify など

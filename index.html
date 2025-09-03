@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3Dキャラクター対話 | AI Companion</title>
+    <title>3D AI エンジニア レイ | Technical Companion</title>
     
     <!-- スタイルシート -->
     <link rel=    <!-- JavaScript モジュール -->
@@ -56,7 +56,7 @@
     <div class="app-container">
         <!-- ヘッダー -->
         <header class="app-header">
-            <div class="logo">AI Companion</div>
+            <div class="logo">AI Engineer Ray</div>
             <div class="settings-button">
                 <span class="material-symbols-rounded">settings</span>
             </div>
@@ -67,60 +67,6 @@
             <!-- 3Dキャラクター表示エリア -->
             <div class="character-container">
                 <div id="vrm-container"></div>
-                <div class="model-controls">
-                    <button id="upload-model" class="control-button">
-                        <span class="material-symbols-rounded">upload</span>
-                        モデルをアップロード
-                    </button>
-                    <input type="file" id="vrm-input" accept=".vrm" style="display:none;">
-                </div>
-                
-                <!-- モーション制御パネル -->
-                <div class="motion-controls">
-                    <div class="motion-group">
-                        <h4>ジェスチャー</h4>
-                        <div class="motion-buttons">
-                            <button class="motion-btn" data-gesture="wave">
-                                <span class="material-symbols-rounded">waving_hand</span>
-                                手を振る
-                            </button>
-                            <button class="motion-btn" data-gesture="nod">
-                                <span class="material-symbols-rounded">check</span>
-                                うなずく
-                            </button>
-                            <button class="motion-btn" data-gesture="shake">
-                                <span class="material-symbols-rounded">close</span>
-                                首を振る
-                            </button>
-                            <button class="motion-btn" data-gesture="thumbsUp">
-                                <span class="material-symbols-rounded">thumb_up</span>
-                                いいね
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div class="motion-group">
-                        <h4>感情表現</h4>
-                        <div class="motion-buttons">
-                            <button class="motion-btn emotion-btn" data-emotion="happy">
-                                <span class="material-symbols-rounded">sentiment_very_satisfied</span>
-                                喜び
-                            </button>
-                            <button class="motion-btn emotion-btn" data-emotion="sad">
-                                <span class="material-symbols-rounded">sentiment_very_dissatisfied</span>
-                                悲しみ
-                            </button>
-                            <button class="motion-btn emotion-btn" data-emotion="surprised">
-                                <span class="material-symbols-rounded">sentiment_neutral</span>
-                                驚き
-                            </button>
-                            <button class="motion-btn emotion-btn" data-emotion="angry">
-                                <span class="material-symbols-rounded">sentiment_frustrated</span>
-                                怒り
-                            </button>
-                        </div>
-                    </div>
-                </div>
             </div>
             
             <!-- チャットインターフェース -->
@@ -197,8 +143,25 @@
                 <div class="setting-group">
                     <h3>AIキャラクター設定</h3>
                     <div class="setting-item">
-                        <label for="character-persona">キャラクター設定</label>
-                        <textarea id="character-persona" rows="4" placeholder="キャラクターの性格や口調、設定を入力してください"></textarea>
+                        <label for="character-name">キャラクター名</label>
+                        <input type="text" id="character-name" placeholder="キャラクターの名前">
+                        <small>AIの名前を設定します</small>
+                    </div>
+                    <div class="setting-item">
+                        <label for="character-persona">基本性格設定</label>
+                        <textarea id="character-persona" rows="4" placeholder="キャラクターの性格や特徴を詳しく記述してください"></textarea>
+                        <small>AIの基本的な性格や特徴を設定します</small>
+                    </div>
+                    <div class="setting-item">
+                        <label for="character-system-prompt">詳細プロンプト設定</label>
+                        <textarea id="character-system-prompt" rows="8" placeholder="AIの詳細な行動指針とシステムプロンプトを設定"></textarea>
+                        <small>AIの具体的な応答スタイル、口調、専門知識などを詳細に設定できます</small>
+                    </div>
+                    <div class="setting-item">
+                        <label for="technical-enthusiasm">技術への反応レベル</label>
+                        <input type="range" id="technical-enthusiasm" min="0" max="100" value="80">
+                        <span class="range-value">80</span>
+                        <small>技術的な話題への興奮度合いを調整します</small>
                     </div>
                 </div>
                 
@@ -212,15 +175,22 @@
                     </div>
                     <div class="setting-item">
                         <label>
-                            <input type="checkbox" id="auto-gestures" checked>
-                            ジェスチャーの自動実行
-                        </label>
-                    </div>
-                    <div class="setting-item">
-                        <label>
                             <input type="checkbox" id="idle-motions" checked>
                             アイドルモーション
                         </label>
+                    </div>
+                </div>
+                
+                <div class="setting-group">
+                    <h3>モデル設定</h3>
+                    <div class="setting-item">
+                        <label>カスタムVRMモデル</label>
+                        <button id="upload-model" class="secondary-button" style="width: 100%; margin-bottom: 0.5rem;">
+                            <span class="material-symbols-rounded">upload</span>
+                            モデルをアップロード
+                        </button>
+                        <input type="file" id="vrm-input" accept=".vrm" style="display:none;">
+                        <small>デフォルトモデル（models/models.vrm）または カスタムVRMファイルを読み込みます</small>
                     </div>
                 </div>
                 

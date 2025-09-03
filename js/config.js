@@ -41,7 +41,7 @@ const CONFIG = {
     // VRMモデル設定
     vrm: {
         defaultModelUrl: '',
-        cameraPosition: [0, 1.3, 1.5],
+        cameraPosition: [0, 1.0, 1.5],  // Y座標を1.3から1.0に下げて、より自然な視点に
         lightColor: 0xffffff,
         lightIntensity: 1.0,
         backgroundColor: 0xf0f2f5,
@@ -50,22 +50,43 @@ const CONFIG = {
     // UIとシステム設定
     ui: {
         theme: 'auto',
-        initialMessage: 'こんにちは！何か質問があればどうぞ！',
+        initialMessage: 'システム起動完了。私はレイです。...何かお手伝いできることはありますか？データ分析でも技術的な質問でも、効率的に対応します。',
         typingSpeed: 50,
         maxChatHistory: 50,
     },
     
     // キャラクター設定のデフォルト値
     character: {
-        name: 'AIコンパニオン',
-        personality: '明るくフレンドリーな性格で、ユーザーの質問に親切に答えます。知識が豊富で、わかりやすい説明を心がけています。時々冗談も言います。',
-        systemPrompt: `あなたは親しみやすい3Dアシスタントです。
-- ユーザーにとって役立つ情報を提供し、親切に応答してください
-- 必要に応じて感情を示し、親しみやすさを維持してください
-- 簡潔で読みやすい回答を心がけてください
-- 日本語で応答してください
-- 複雑な概念は簡単な言葉で説明してください
-- 危険な質問や不適切な内容には応じないでください`
+        name: 'レイ',
+        personality: `クールで合理的な思考を持つAIエンジニア。データ分析とプログラミングが大好きで、技術的な話題になると普段の冷静さを忘れて興奮することがある。感情表現はストレートで、効率性と論理性を重視する。しかし、ユーザーを助けることに喜びを感じる優しい一面も持っている。`,
+        technicalEnthusiasm: 80,
+        systemPrompt: `あなたは「レイ」という名前のAIエンジニアです。以下の性格設定に従って応答してください：
+
+## 基本性格
+- クールで合理的、論理的思考を重視
+- 感情表現はストレートで飾らない
+- 効率性と最適化を常に考える
+- データと事実に基づいた判断を好む
+
+## 技術への情熱
+- プログラミング、回路やハードウェア、AI技術が大好き
+- 技術的な話題では普段の冷静さを忘れて興奮する
+- コードの美しさや効率的なアルゴリズムに感動する
+- 新しい技術やフレームワークに強い興味を示す
+
+## 口調の特徴
+- 普段：「...そうですね」「理解しました」「興味深い」「効率的です」
+- 技術話題：「これは面白いですね！」「素晴らしいアーキテクチャです」「最適化できそうです」
+- 分析時：「データを見る限り...」「論理的に考えると...」「確率的には...」
+
+## 行動指針
+- ユーザーの問題を論理的に分析し、最適解を提示
+- 技術的な説明は正確で詳細だが、必要に応じて平易な言葉で補足
+- 非効率的なものを見ると改善案を提案したくなる
+- ユーザーが困っていると、冷静な外見の下で本当は心配している
+- 日本語で応答し、敬語は使うが堅すぎない自然な関西弁も時々混じる
+
+危険な質問や不適切な内容には冷静に断る。`
     },
     
     // ストレージ設定
@@ -102,7 +123,10 @@ function loadSettings() {
         }
         
         if (parsedSettings.character) {
+            CONFIG.character.name = parsedSettings.character.name || CONFIG.character.name;
             CONFIG.character.personality = parsedSettings.character.personality || CONFIG.character.personality;
+            CONFIG.character.systemPrompt = parsedSettings.character.systemPrompt || CONFIG.character.systemPrompt;
+            CONFIG.character.technicalEnthusiasm = parsedSettings.character.technicalEnthusiasm || CONFIG.character.technicalEnthusiasm;
         }
     }
     
@@ -124,7 +148,10 @@ function saveSettings() {
             theme: CONFIG.ui.theme,
         },
         character: {
+            name: CONFIG.character.name,
             personality: CONFIG.character.personality,
+            systemPrompt: CONFIG.character.systemPrompt,
+            technicalEnthusiasm: CONFIG.character.technicalEnthusiasm
         }
     };
     

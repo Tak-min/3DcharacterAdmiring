@@ -8,12 +8,14 @@ class VRMController {
         this.scene = null;
         this.camera = null;
         this.renderer = null;
-        this.controls = null;
         this.currentVrm = null;
         this.mixer = null;
         this.clock = new THREE.Clock();
         this.blinkInterval = null;
-        this.lookAtTarget = new THREE.Vector3(0, 1.5, 0);
+        
+        // LookAtターゲット用のObject3Dオブジェクト（VRMライブラリが要求）
+        this.lookAtTarget = new THREE.Object3D();
+        this.lookAtTarget.position.set(0, 1.2, 0);
         
         this.init();
     }
@@ -30,7 +32,7 @@ class VRMController {
         const width = this.container.clientWidth;
         const height = this.container.clientHeight;
         this.camera = new THREE.PerspectiveCamera(30, width / height, 0.1, 20);
-        this.camera.position.set(0, 1.3, 1.5);
+        this.camera.position.set(...CONFIG.vrm.cameraPosition);  // config.jsの設定を使用
         
         // レンダラーの設定
         this.renderer = new THREE.WebGLRenderer({ 
@@ -42,14 +44,6 @@ class VRMController {
         this.renderer.outputEncoding = THREE.sRGBEncoding;
         this.container.appendChild(this.renderer.domElement);
         
-        // カメラコントロールの設定
-        this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
-        this.controls.target.set(0, 1.3, 0);
-        this.controls.screenSpacePanning = true;
-        this.controls.minDistance = 0.6;
-        this.controls.maxDistance = 5.0;
-        this.controls.update();
-        
         // ライトの設定
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
         this.scene.add(ambientLight);
@@ -58,11 +52,30 @@ class VRMController {
         directionalLight.position.set(-1, 1, 1);
         this.scene.add(directionalLight);
         
+        // LookAtターゲットをシーンに追加
+        this.scene.add(this.lookAtTarget);
+        
         // ウィンドウリサイズ対応
         window.addEventListener('resize', this.onWindowResize.bind(this));
         
         // アニメーションループ開始
         this.animate();
+        
+        // デフォルトモデルの読み込み
+        this.loadDefaultModel();
+    }
+    
+    /**
+     * デフォルトVRMモデルの読み込み
+     */
+    async loadDefaultModel() {
+        try {
+            console.log('デフォルトモデルを読み込み中...');
+            await this.loadVRM('models/models.vrm');
+        } catch (error) {
+            console.warn('デフォルトモデルの読み込みに失敗しました:', error);
+            console.log('カスタムモデルをアップロードしてください');
+        }
     }
     
     /**
@@ -114,12 +127,12 @@ class VRMController {
                                 }
                                 
                                 // LookAt機能の安全な初期化
-                                if (vrm.lookAt && vrm.lookAt.target) {
-                                    // ターゲットが有効かチェック
-                                    if (typeof vrm.lookAt.target.getWorldPosition !== 'function') {
-                                        console.warn('LookAt target missing getWorldPosition method, disabling LookAt');
-                                        vrm.lookAt = null;
-                                    }
+                                if (vrm.lookAt) {
+                                    // デフォルトのLookAtターゲットを設定
+                                    vrm.lookAt.target = this.lookAtTarget;
+                                    console.log('VRM LookAt initialized with target');
+                                } else {
+                                    console.warn('VRM LookAt not available');
                                 }
                             } else {
                                 // VRMではない通常のglTFモデルの場合
@@ -399,10 +412,11 @@ class VRMController {
     lookAt(target) {
         if (!this.currentVrm) return;
         
-        this.lookAtTarget.copy(target);
+        // Object3Dのpositionを更新
+        this.lookAtTarget.position.copy(target);
         
         if (this.currentVrm.lookAt) {
-            this.currentVrm.lookAt.target = target;
+            this.currentVrm.lookAt.target = this.lookAtTarget;
         }
     }
     
@@ -496,17 +510,4 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // グローバルアクセスのためwindowオブジェクトに追加
     window.vrmController = vrmController;
-    
-    // デフォルトモデルがある場合は読み込む
-    if (CONFIG.vrm.defaultModelUrl) {
-        vrmController.loadVRM(CONFIG.vrm.defaultModelUrl)
-            .then(vrm => {
-                console.log('Default VRM model loaded successfully');
-                const event = new CustomEvent('vrmLoaded', { detail: { vrm } });
-                document.dispatchEvent(event);
-            })
-            .catch(error => {
-                console.error('Failed to load default VRM model:', error);
-            });
-    }
 });

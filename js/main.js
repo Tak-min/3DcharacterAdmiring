@@ -106,13 +106,14 @@ function showFirstTimeGuidance() {
         // 初回訪問時の案内メッセージ
         setTimeout(() => {
             window.uiController.addMessage('assistant', 
-                '👋 はじめまして！このアプリの使い方をご案内します。\n\n' +
-                '1. 右下のアップロードボタンから、お好みのVRMモデルをアップロードできます\n' +
-                '2. テキストボックスにメッセージを入力して送信すると、AIが応答します\n' +
-                '3. マイクボタンを押すと、音声入力で会話できます\n' +
-                '4. 右上の⚙️ボタンから、音声や見た目などの設定を変更できます\n' +
-                '5. 左下のモーションボタンでキャラクターの動きを操作できます\n\n' +
-                'それでは、楽しい会話をお楽しみください！何か質問があればどうぞ😊'
+                '初期化完了。私はレイです。...初回利用ですね。\n\n' +
+                'システム概要を説明します：\n' +
+                '1. VRMモデルのアップロード機能 - 右下のボタンから実行可能\n' +
+                '2. テキストベース対話システム - 下部の入力フィールドを使用\n' +
+                '3. 音声入力インターフェース - マイクアイコンでアクティベート\n' +
+                '4. 設定パネル - 右上の⚙️から各種パラメータを調整可能\n' +
+                '5. モーション制御システム - 左下のボタンで動作を実行\n\n' +
+                '技術的な質問や効率化の相談など、お気軽にどうぞ。最適な解決策を提示します。'
             );
         }, 1500);
         
@@ -133,65 +134,8 @@ function initMotionController() {
             // モーションコントローラーのインスタンス化
             window.motionController = new MotionController(window.vrmController);
             console.log('MotionController: 初期化完了');
-            
-            // モーションボタンのイベントリスナー設定
-            setupMotionButtons();
         }
     }, 100);
-}
-
-/**
- * モーションボタンのイベントリスナー設定
- */
-function setupMotionButtons() {
-    // ジェスチャーボタン
-    const gestureButtons = document.querySelectorAll('.motion-btn[data-gesture]');
-    gestureButtons.forEach(button => {
-        button.addEventListener('click', async () => {
-            const gesture = button.dataset.gesture;
-            console.log(`モーションボタンクリック: ${gesture}`);
-            
-            // ボタンのアクティブ状態
-            button.classList.add('active');
-            
-            // ジェスチャー実行
-            if (window.motionController) {
-                await window.motionController.playGesture(gesture);
-            }
-            
-            // アクティブ状態を解除
-            setTimeout(() => {
-                button.classList.remove('active');
-            }, 2000);
-        });
-    });
-    
-    // 感情ボタン
-    const emotionButtons = document.querySelectorAll('.motion-btn[data-emotion]');
-    emotionButtons.forEach(button => {
-        button.addEventListener('click', async () => {
-            const emotion = button.dataset.emotion;
-            console.log(`感情ボタンクリック: ${emotion}`);
-            
-            // 他の感情ボタンのアクティブ状態を解除
-            emotionButtons.forEach(btn => btn.classList.remove('active'));
-            
-            // 現在のボタンをアクティブに
-            button.classList.add('active');
-            
-            // 感情表現実行
-            if (window.motionController) {
-                await window.motionController.playEmotion(emotion);
-            }
-            
-            // アクティブ状態を解除
-            setTimeout(() => {
-                button.classList.remove('active');
-            }, 3000);
-        });
-    });
-    
-    console.log('MotionController: ボタンイベントリスナー設定完了');
 }
 
 // モーション制御初期化の開始

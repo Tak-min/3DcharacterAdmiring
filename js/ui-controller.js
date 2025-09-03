@@ -17,6 +17,12 @@ class UIController {
         this.geminiApiKeyInput = document.getElementById('gemini-api-key');
         this.nijivoiceApiKeyInput = document.getElementById('nijivoice-api-key');
         
+        // キャラクター設定関連の要素
+        this.characterNameInput = document.getElementById('character-name');
+        this.characterPersonaInput = document.getElementById('character-persona');
+        this.characterSystemPromptInput = document.getElementById('character-system-prompt');
+        this.technicalEnthusiasmSlider = document.getElementById('technical-enthusiasm');
+        
         // 状態
         this.isListening = false;
         this.recognition = null;
@@ -25,6 +31,9 @@ class UIController {
         
         // イベントリスナーの設定
         this.setupEventListeners();
+        
+        // 設定の読み込み
+        this.loadAllSettings();
         
         // 音声認識の初期化
         this.initSpeechRecognition();
@@ -216,9 +225,34 @@ class UIController {
         }
         
         // キャラクター設定の初期化
-        const characterPersona = document.getElementById('character-persona');
-        if (characterPersona) {
-            characterPersona.value = CONFIG.character.personality;
+        if (this.characterNameInput) {
+            this.characterNameInput.value = CONFIG.character.name;
+        }
+        
+        if (this.characterPersonaInput) {
+            this.characterPersonaInput.value = CONFIG.character.personality;
+        }
+        
+        if (this.characterSystemPromptInput) {
+            this.characterSystemPromptInput.value = CONFIG.character.systemPrompt;
+        }
+        
+        if (this.technicalEnthusiasmSlider) {
+            this.technicalEnthusiasmSlider.value = CONFIG.character.technicalEnthusiasm || 80;
+            const rangeValue = this.technicalEnthusiasmSlider.nextElementSibling;
+            if (rangeValue) {
+                rangeValue.textContent = this.technicalEnthusiasmSlider.value;
+            }
+        }
+        
+        // スライダーの値更新イベント
+        if (this.technicalEnthusiasmSlider) {
+            this.technicalEnthusiasmSlider.addEventListener('input', (e) => {
+                const rangeValue = e.target.nextElementSibling;
+                if (rangeValue) {
+                    rangeValue.textContent = e.target.value;
+                }
+            });
         }
     }
     
@@ -249,8 +283,38 @@ class UIController {
             }
         }
         
+        // キャラクター設定の保存
+        if (this.characterNameInput) {
+            CONFIG.character.name = this.characterNameInput.value.trim() || 'レイ';
+        }
+        
+        if (this.characterPersonaInput) {
+            CONFIG.character.personality = this.characterPersonaInput.value.trim();
+        }
+        
+        if (this.characterSystemPromptInput) {
+            CONFIG.character.systemPrompt = this.characterSystemPromptInput.value.trim();
+            // Gemini APIのシステムプロンプトも更新
+            if (window.geminiAPI) {
+                window.geminiAPI.setSystemPrompt(CONFIG.character.systemPrompt);
+            }
+        }
+        
+        if (this.technicalEnthusiasmSlider) {
+            CONFIG.character.technicalEnthusiasm = parseInt(this.technicalEnthusiasmSlider.value);
+        }
+        
         // 従来の設定保存処理
         saveSettings();
+        
+        console.log('キャラクター設定が更新されました:', CONFIG.character.name);
+    }
+    
+    /**
+     * すべての設定を読み込み
+     */
+    loadAllSettings() {
+        // 設定読み込み処理は必要に応じて追加
     }
     
     /**
